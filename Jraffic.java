@@ -389,17 +389,7 @@ public class Jraffic extends JPanel implements ActionListener {
         g2d.drawString("ESC Key: Exit Simulation", WINDOW_WIDTH - 200, WINDOW_HEIGHT - 25);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Jraffic - Traffic Simulation");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setResizable(false);
-            frame.add(new Jraffic(), BorderLayout.CENTER);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
+
 
     enum Turns { RIGHT, LEFT, FORWARD }
     enum Phase { Green, AllRed }
