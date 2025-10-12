@@ -10,12 +10,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.awt.geom.Point2D;
 
 public class Jraffic extends JPanel implements ActionListener {
 
     // --- Configuration Constants ---
     private static final int WINDOW_WIDTH = 800;
-    private static final int WINDOW_HEIGHT = 600;
+    private static final int WINDOW_HEIGHT = 800;
     private static final double ROAD_WIDTH = 100.0;
     private static final double INTERSECTION_SIZE = ROAD_WIDTH / 2.0;
     private static final double MIN_SPAWN_DELAY = 0.3;
@@ -42,14 +43,18 @@ public class Jraffic extends JPanel implements ActionListener {
     private final Random random = new Random();
     private final Timer timer;
 
+    private long totalCarsSpawned = 0;
+    private long simulationStartTime = 0;
+
     public Jraffic() {
         // Panel setup
         setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-        setBackground(Color.DARK_GRAY); 
+        setBackground(Color.DARK_GRAY);
         setFocusable(true);
 
         // Initialize simulation state
         initializeSimulation();
+        simulationStartTime = System.nanoTime();
 
         // Keyboard input handler
         addKeyListener(new KeyAdapter() {
@@ -79,13 +84,11 @@ public class Jraffic extends JPanel implements ActionListener {
     private void initializeSimulation() {
         Point center = new Point(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
 
-        // --- Define Spawn Points ---
         spawnPoints.add(new SpawnPoint(center.x - INTERSECTION_SIZE, 0, 0, CAR_SPEED)); // 0: North
         spawnPoints.add(new SpawnPoint(center.x, WINDOW_HEIGHT - INTERSECTION_SIZE, 0, -CAR_SPEED)); // 1: South
         spawnPoints.add(new SpawnPoint(0, center.y, CAR_SPEED, 0)); // 2: West
         spawnPoints.add(new SpawnPoint(WINDOW_WIDTH - INTERSECTION_SIZE, center.y - INTERSECTION_SIZE, -CAR_SPEED, 0)); // 3: East
 
-        // --- Define Traffic Lights ---
         lights.add(new Light(center.x - 2 * INTERSECTION_SIZE, center.y - 2 * INTERSECTION_SIZE, 0, CAR_SPEED)); // 0: North
         lights.add(new Light(center.x + INTERSECTION_SIZE, center.y - 2 * INTERSECTION_SIZE, -CAR_SPEED, 0)); // 1: East
         lights.add(new Light(center.x - 2 * INTERSECTION_SIZE, center.y + INTERSECTION_SIZE, CAR_SPEED, 0)); // 2: West
@@ -95,26 +98,25 @@ public class Jraffic extends JPanel implements ActionListener {
     }
 
     private void handleInput() {
-        if (activeKeys.contains(KeyEvent.VK_ESCAPE)) {
-            System.exit(0);
-        }
-        if (activeKeys.contains(KeyEvent.VK_DOWN)) trySpawnCar(0); // From North
-        if (activeKeys.contains(KeyEvent.VK_UP)) trySpawnCar(1); // From South
-        if (activeKeys.contains(KeyEvent.VK_RIGHT)) trySpawnCar(2); // From West
-        if (activeKeys.contains(KeyEvent.VK_LEFT)) trySpawnCar(3); // From East
+        if (activeKeys.contains(KeyEvent.VK_ESCAPE)) System.exit(0);
+        if (activeKeys.contains(KeyEvent.VK_DOWN)) trySpawnCar(0);
+        if (activeKeys.contains(KeyEvent.VK_UP)) trySpawnCar(1);
+        if (activeKeys.contains(KeyEvent.VK_RIGHT)) trySpawnCar(2);
+        if (activeKeys.contains(KeyEvent.VK_LEFT)) trySpawnCar(3);
         if (activeKeys.contains(KeyEvent.VK_R)) trySpawnCar(random.nextInt(spawnPoints.size()));
     }
 
     private void trySpawnCar(int spawnIndex) {
         long now = System.nanoTime();
-        if ((now - lastSpawnTime.getOrDefault(spawnIndex, 0L)) / 1e9 < MIN_SPAWN_DELAY) {
-            return;
-        }
+        if ((now - lastSpawnTime.getOrDefault(spawnIndex, 0L)) / 1e9 < MIN_SPAWN_DELAY) return;
+        
         SpawnPoint sp = spawnPoints.get(spawnIndex);
         Car newCar = new Car(sp.x, sp.y, sp.dirX, sp.dirY, getRandomTurn());
+        
         if (!isCarTooClose(newCar, cars)) {
             cars.add(newCar);
             lastSpawnTime.put(spawnIndex, now);
+            totalCarsSpawned++; 
         }
     }
 
@@ -169,9 +171,7 @@ public class Jraffic extends JPanel implements ActionListener {
                                car.y < -INTERSECTION_SIZE || car.y > WINDOW_HEIGHT + INTERSECTION_SIZE);
         List<Car> carsSnapshot = new ArrayList<>(cars);
         for (Car car : cars) {
-            if (shouldStopAtLight(car) || isCarTooClose(car, carsSnapshot)) {
-                continue;
-            }
+            if (shouldStopAtLight(car) || isCarTooClose(car, carsSnapshot)) continue;
             car.x += car.dirX;
             car.y += car.dirY;
             tryTurn(car);
@@ -207,9 +207,7 @@ public class Jraffic extends JPanel implements ActionListener {
     }
 
     private void tryTurn(Car car) {
-        if (car.turn == Turns.FORWARD || car.turned) {
-            return;
-        }
+        if (car.turn == Turns.FORWARD || car.turned) return;
 
         double cx = WINDOW_WIDTH / 2.0;
         double cy = WINDOW_HEIGHT / 2.0;
@@ -217,55 +215,34 @@ public class Jraffic extends JPanel implements ActionListener {
 
         if (car.dirX > 0) {
             if (car.turn == Turns.RIGHT && Math.abs(car.x - (cx - INTERSECTION_SIZE)) < CAR_SPEED) {
-                canTurn = true;
-                car.x = cx - INTERSECTION_SIZE;
+                canTurn = true; car.x = cx - INTERSECTION_SIZE;
             } else if (car.turn == Turns.LEFT && Math.abs(car.x - cx) < CAR_SPEED) {
-                canTurn = true;
-                car.x = cx;
-                car.y = cy - INTERSECTION_SIZE;
+                canTurn = true; car.x = cx; car.y = cy - INTERSECTION_SIZE;
             }
-        }
-        else if (car.dirX < 0) {
+        } else if (car.dirX < 0) {
             if (car.turn == Turns.RIGHT && Math.abs(car.x - cx) < CAR_SPEED) {
-                canTurn = true;
-                car.x = cx;
+                canTurn = true; car.x = cx;
             } else if (car.turn == Turns.LEFT && Math.abs(car.x - (cx - INTERSECTION_SIZE)) < CAR_SPEED) {
-                canTurn = true;
-                car.x = cx - INTERSECTION_SIZE;
-                car.y = cy;
+                canTurn = true; car.x = cx - INTERSECTION_SIZE; car.y = cy;
             }
-        }
-        else if (car.dirY > 0) {
+        } else if (car.dirY > 0) {
             if (car.turn == Turns.RIGHT && Math.abs(car.y - (cy - INTERSECTION_SIZE)) < CAR_SPEED) {
-                canTurn = true;
-                car.y = cy - INTERSECTION_SIZE;
+                canTurn = true; car.y = cy - INTERSECTION_SIZE;
             } else if (car.turn == Turns.LEFT && Math.abs(car.y - cy) < CAR_SPEED) {
-                canTurn = true;
-                car.y = cy;
-                car.x = cx;
+                canTurn = true; car.y = cy; car.x = cx;
             }
-        }
-        else if (car.dirY < 0) {
+        } else if (car.dirY < 0) {
             if (car.turn == Turns.RIGHT && Math.abs(car.y - cy) < CAR_SPEED) {
-                canTurn = true;
-                car.y = cy;
+                canTurn = true; car.y = cy;
             } else if (car.turn == Turns.LEFT && Math.abs(car.y - (cy - INTERSECTION_SIZE)) < CAR_SPEED) {
-                canTurn = true;
-                car.y = cy - INTERSECTION_SIZE;
-                car.x = cx - INTERSECTION_SIZE;
+                canTurn = true; car.y = cy - INTERSECTION_SIZE; car.x = cx - INTERSECTION_SIZE;
             }
         }
 
         if (canTurn) {
-            double oldDirX = car.dirX;
-            double oldDirY = car.dirY;
-            if (car.turn == Turns.LEFT) {
-                car.dirX = oldDirY;
-                car.dirY = -oldDirX;
-            } else if (car.turn == Turns.RIGHT) {
-                car.dirX = -oldDirY;
-                car.dirY = oldDirX;
-            }
+            double oldDirX = car.dirX, oldDirY = car.dirY;
+            if (car.turn == Turns.LEFT) { car.dirX = oldDirY; car.dirY = -oldDirX; } 
+            else if (car.turn == Turns.RIGHT) { car.dirX = -oldDirY; car.dirY = oldDirX; }
             car.turned = true;
         }
     }
@@ -274,28 +251,31 @@ public class Jraffic extends JPanel implements ActionListener {
         return Turns.values()[random.nextInt(Turns.values().length)];
     }
 
-    // --- DRAWING METHODS ---
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         drawBackground(g2d);
         drawRoads(g2d);
         drawLights(g2d);
         drawCars(g2d);
+        drawStats(g2d); 
     }
 
     private void drawBackground(Graphics2D g2d) {
-        g2d.setColor(new Color(34, 139, 34));
+        Point2D center = new Point2D.Float(WINDOW_WIDTH / 2f, WINDOW_HEIGHT / 2f);
+        float radius = WINDOW_WIDTH / 1.5f;
+        float[] dist = {0.0f, 1.0f};
+        Color[] colors = {new Color(50, 150, 50), new Color(25, 77, 25)}; 
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, dist, colors);
+        g2d.setPaint(p);
         g2d.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     }
 
     private void drawRoads(Graphics2D g2d) {
-        int centerX = WINDOW_WIDTH / 2;
-        int centerY = WINDOW_HEIGHT / 2;
+        int centerX = WINDOW_WIDTH / 2, centerY = WINDOW_HEIGHT / 2;
         int roadWidthInt = (int) ROAD_WIDTH;
 
         g2d.setColor(Color.GRAY);
@@ -317,12 +297,9 @@ public class Jraffic extends JPanel implements ActionListener {
     }
 
     private void drawLaneMarkings(Graphics2D g2d) {
-        int centerX = WINDOW_WIDTH / 2;
-        int centerY = WINDOW_HEIGHT / 2;
-        int intersectionStartX = (int) (centerX - ROAD_WIDTH / 2);
-        int intersectionEndX = (int) (centerX + ROAD_WIDTH / 2);
-        int intersectionStartY = (int) (centerY - ROAD_WIDTH / 2);
-        int intersectionEndY = (int) (centerY + ROAD_WIDTH / 2);
+        int centerX = WINDOW_WIDTH / 2, centerY = WINDOW_HEIGHT / 2;
+        int intersectionStartX = (int) (centerX - ROAD_WIDTH / 2), intersectionEndX = (int) (centerX + ROAD_WIDTH / 2);
+        int intersectionStartY = (int) (centerY - ROAD_WIDTH / 2), intersectionEndY = (int) (centerY + ROAD_WIDTH / 2);
 
         g2d.setColor(Color.YELLOW);
         Stroke dashed = new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{20, 15}, 0);
@@ -339,24 +316,18 @@ public class Jraffic extends JPanel implements ActionListener {
             g2d.setColor(Color.BLACK);
             g2d.fill(new RoundRectangle2D.Double(light.x, light.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 10, 10));
 
-            Color redOff = new Color(40, 0, 0);
-            Color greenOff = new Color(0, 40, 0);
-            Color redOn = Color.RED;
-            Color greenOn = new Color(50, 205, 50); 
+            Color redOff = new Color(40, 0, 0), greenOff = new Color(0, 40, 0);
+            Color redOn = Color.RED, greenOn = new Color(50, 205, 50);
 
             Color redColor = light.isGreen ? redOff : redOn;
             Color greenColor = light.isGreen ? greenOn : greenOff;
 
-            if (light.dirX != 0) { 
-                g2d.setColor(redColor);
-                g2d.fillOval((int) light.x + 8, (int) light.y + 17, 15, 15);
-                g2d.setColor(greenColor);
-                g2d.fillOval((int) light.x + 27, (int) light.y + 17, 15, 15);
-            } else { 
-                g2d.setColor(redColor);
-                g2d.fillOval((int) light.x + 17, (int) light.y + 8, 15, 15);
-                g2d.setColor(greenColor);
-                g2d.fillOval((int) light.x + 17, (int) light.y + 27, 15, 15);
+            if (light.dirX != 0) {
+                g2d.setColor(redColor); g2d.fillOval((int) light.x + 8, (int) light.y + 17, 15, 15);
+                g2d.setColor(greenColor); g2d.fillOval((int) light.x + 27, (int) light.y + 17, 15, 15);
+            } else {
+                g2d.setColor(redColor); g2d.fillOval((int) light.x + 17, (int) light.y + 8, 15, 15);
+                g2d.setColor(greenColor); g2d.fillOval((int) light.x + 17, (int) light.y + 27, 15, 15);
             }
         }
     }
@@ -373,17 +344,32 @@ public class Jraffic extends JPanel implements ActionListener {
 
             g2d.setColor(carColor);
             g2d.fill(new RoundRectangle2D.Double(car.x, car.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 15, 15));
-
-            g2d.setColor(new Color(255, 255, 255, 70)); 
+            g2d.setColor(new Color(255, 255, 255, 70));
             g2d.fill(new RoundRectangle2D.Double(car.x + 5, car.y + 5, INTERSECTION_SIZE - 10, INTERSECTION_SIZE - 25, 10, 10));
-
             g2d.setColor(carColor.darker());
             g2d.setStroke(new BasicStroke(2));
             g2d.draw(new RoundRectangle2D.Double(car.x, car.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 15, 15));
         }
     }
 
-    // --- Main Method ---
+    private void drawStats(Graphics2D g2d) {
+        g2d.setColor(new Color(0, 0, 0, 100));
+        g2d.fill(new RoundRectangle2D.Double(10, 10, 200, 85, 15, 15));
+
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+        long elapsedNanos = System.nanoTime() - simulationStartTime;
+        long elapsedSeconds = elapsedNanos / 1_000_000_000;
+        long minutes = elapsedSeconds / 60;
+        long seconds = elapsedSeconds % 60;
+        String uptime = String.format("%02d:%02d", minutes, seconds);
+
+        g2d.drawString("Uptime: " + uptime, 20, 35);
+        g2d.drawString("Active Cars: " + cars.size(), 20, 55);
+        g2d.drawString("Total Cars Spawned: " + totalCarsSpawned, 20, 75);
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Jraffic Swing - Traffic Simulation");
@@ -396,22 +382,18 @@ public class Jraffic extends JPanel implements ActionListener {
         });
     }
 
-    // --- Data Structures ---
     enum Turns { RIGHT, LEFT, FORWARD }
     enum Phase { Green, AllRed }
     static class Light {
-        double x, y, dirX, dirY;
-        boolean isGreen = false;
-        Light(double x, double y, double dirX, double dirY) { this.x = x; this.y = y; this.dirX = dirX; this.dirY = dirY; }
+        double x, y, dirX, dirY; boolean isGreen = false;
+        Light(double x, double y, double dX, double dY) { this.x=x; this.y=y; this.dirX=dX; this.dirY=dY; }
     }
     static class Car {
-        double x, y, dirX, dirY;
-        Turns turn;
-        boolean turned = false;
-        Car(double x, double y, double dirX, double dirY, Turns turn) { this.x = x; this.y = y; this.dirX = dirX; this.dirY = dirY; this.turn = turn; }
+        double x, y, dirX, dirY; Turns turn; boolean turned = false;
+        Car(double x, double y, double dX, double dY, Turns t) { this.x=x; this.y=y; this.dirX=dX; this.dirY=dY; this.turn=t; }
     }
     static class SpawnPoint {
         double x, y, dirX, dirY;
-        SpawnPoint(double x, double y, double dirX, double dirY) { this.x = x; this.y = y; this.dirX = dirX; this.dirY = dirY; }
+        SpawnPoint(double x, double y, double dX, double dY) { this.x=x; this.y=y; this.dirX=dX; this.dirY=dY; }
     }
 }
