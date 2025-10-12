@@ -45,7 +45,7 @@ public class Jraffic extends JPanel implements ActionListener {
     public Jraffic() {
         // Panel setup
         setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-        setBackground(Color.DARK_GRAY); // This will be covered by our drawing methods
+        setBackground(Color.DARK_GRAY); 
         setFocusable(true);
 
         // Initialize simulation state
@@ -274,13 +274,12 @@ public class Jraffic extends JPanel implements ActionListener {
         return Turns.values()[random.nextInt(Turns.values().length)];
     }
 
-    // --- NEW AND IMPROVED DRAWING METHODS ---
+    // --- DRAWING METHODS ---
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // Enable anti-aliasing for smooth graphics
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         drawBackground(g2d);
@@ -290,7 +289,7 @@ public class Jraffic extends JPanel implements ActionListener {
     }
 
     private void drawBackground(Graphics2D g2d) {
-        g2d.setColor(new Color(34, 139, 34)); // A nice "Forest Green" for grass
+        g2d.setColor(new Color(34, 139, 34));
         g2d.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
     }
 
@@ -299,12 +298,10 @@ public class Jraffic extends JPanel implements ActionListener {
         int centerY = WINDOW_HEIGHT / 2;
         int roadWidthInt = (int) ROAD_WIDTH;
 
-        // Main road surfaces
         g2d.setColor(Color.GRAY);
         g2d.fillRect(0, centerY - roadWidthInt / 2, WINDOW_WIDTH, roadWidthInt);
         g2d.fillRect(centerX - roadWidthInt / 2, 0, roadWidthInt, WINDOW_HEIGHT);
 
-        // White edge lines
         g2d.setColor(Color.WHITE);
         g2d.setStroke(new BasicStroke(3));
         g2d.drawLine(0, centerY - roadWidthInt / 2, centerX - roadWidthInt / 2, centerY - roadWidthInt / 2);
@@ -339,27 +336,23 @@ public class Jraffic extends JPanel implements ActionListener {
 
     private void drawLights(Graphics2D g2d) {
         for (Light light : lights) {
-            // Housing for the traffic light
             g2d.setColor(Color.BLACK);
             g2d.fill(new RoundRectangle2D.Double(light.x, light.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 10, 10));
 
-            // Define colors for on/off states
             Color redOff = new Color(40, 0, 0);
             Color greenOff = new Color(0, 40, 0);
             Color redOn = Color.RED;
-            Color greenOn = new Color(50, 205, 50); // LimeGreen
+            Color greenOn = new Color(50, 205, 50); 
 
-            // Determine which light is on
             Color redColor = light.isGreen ? redOff : redOn;
             Color greenColor = light.isGreen ? greenOn : greenOff;
 
-            // Draw the bulbs based on the direction the light controls
-            if (light.dirX != 0) { // For horizontal traffic (East/West)
+            if (light.dirX != 0) { 
                 g2d.setColor(redColor);
                 g2d.fillOval((int) light.x + 8, (int) light.y + 17, 15, 15);
                 g2d.setColor(greenColor);
                 g2d.fillOval((int) light.x + 27, (int) light.y + 17, 15, 15);
-            } else { // For vertical traffic (North/South)
+            } else { 
                 g2d.setColor(redColor);
                 g2d.fillOval((int) light.x + 17, (int) light.y + 8, 15, 15);
                 g2d.setColor(greenColor);
@@ -378,15 +371,12 @@ public class Jraffic extends JPanel implements ActionListener {
                 default:      carColor = Color.WHITE;
             }
 
-            // Car Body with rounded corners
             g2d.setColor(carColor);
             g2d.fill(new RoundRectangle2D.Double(car.x, car.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 15, 15));
 
-            // Roof/Window reflection to give a 3D feel
-            g2d.setColor(new Color(255, 255, 255, 70)); // Semi-transparent white
+            g2d.setColor(new Color(255, 255, 255, 70)); 
             g2d.fill(new RoundRectangle2D.Double(car.x + 5, car.y + 5, INTERSECTION_SIZE - 10, INTERSECTION_SIZE - 25, 10, 10));
 
-            // Outline
             g2d.setColor(carColor.darker());
             g2d.setStroke(new BasicStroke(2));
             g2d.draw(new RoundRectangle2D.Double(car.x, car.y, INTERSECTION_SIZE, INTERSECTION_SIZE, 15, 15));
