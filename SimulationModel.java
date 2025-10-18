@@ -56,4 +56,7 @@ public class SimulationModel {
             totalCarsSpawned++;
         }
     }
+    public void trySpawnRandomCar() {
+        trySpawnCar(random.nextInt(spawnPoints.size()));
+    }
 }
