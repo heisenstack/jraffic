@@ -32,7 +32,7 @@ To run the Jraffic simulation, you only need a Java Development Kit (JDK) versio
     ```
 4.  Run the compiled application with this command:
     ```bash
-    java JrafficSwing
+    java Jraffic
     ```
     A new window displaying the simulation should appear.
 
