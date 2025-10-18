@@ -59,4 +59,32 @@ public class SimulationModel {
     public void trySpawnRandomCar() {
         trySpawnCar(random.nextInt(spawnPoints.size()));
     }
+
+    private void updateTrafficLights() {
+        long now = System.nanoTime();
+        double elapsedSeconds = (now - lastSwitchTime) / 1e9;
+
+        switch (phase) {
+            case Green:
+                int greenLightId = Config.LIGHT_ORDER[currentGreenIndex];
+                if (elapsedSeconds >= calculateGreenDuration(greenLightId)) {
+                    phase = Phase.AllRed;
+                    lastSwitchTime = now;
+                    lights.forEach(light -> light.isGreen = false);
+                }
+                break;
+            case AllRed:
+                if (elapsedSeconds >= Config.ALL_RED_DURATION_SEC) {
+                    currentGreenIndex = (currentGreenIndex + 1) % Config.LIGHT_ORDER.length;
+                    int nextGreenLightId = Config.LIGHT_ORDER[currentGreenIndex];
+                    phase = Phase.Green;
+                    lastSwitchTime = now;
+                    double nextGreenDuration = calculateGreenDuration(nextGreenLightId);
+                    for (int i = 0; i < lights.size(); i++) {
+                        lights.get(i).isGreen = (i == nextGreenLightId && nextGreenDuration > 0);
+                    }
+                }
+                break;
+        }
+    }
 }
