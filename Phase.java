@@ -1,3 +1,3 @@
-public class Phase {
-    
+public enum Phase {
+    Green, AllRed
 }
