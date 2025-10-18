@@ -9,5 +9,6 @@ public class Car {
         this.dirX = dX;
         this.dirY = dY;
         this.turn = t;
+        this.color = getRandomColor();
     }
 }
