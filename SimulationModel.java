@@ -87,4 +87,21 @@ public class SimulationModel {
                 break;
         }
     }
+    private double calculateGreenDuration(int greenLightId) {
+        Light greenLight = lights.get(greenLightId);
+        long waitingCars = cars.stream()
+                .filter(car -> car.dirX == greenLight.dirX && car.dirY == greenLight.dirY)
+                .filter(car -> {
+                    double cx = Config.WINDOW_WIDTH / 2.0;
+                    double cy = Config.WINDOW_HEIGHT / 2.0;
+                    if (car.dirY > 0) return (cy - car.y) < 200.0 && (cy - car.y) > 0;
+                    if (car.dirY < 0) return (car.y - cy) < 200.0 && (car.y - cy) > 0;
+                    if (car.dirX > 0) return (cx - car.x) < 200.0 && (cx - car.x) > 0;
+                    if (car.dirX < 0) return (car.x - cx) < 200.0 && (car.x - cx) > 0;
+                    return false;
+                })
+                .count();
+        if (waitingCars == 0) return 0.0;
+        return Math.min(Config.MAX_GREEN_DURATION_SEC, Config.MIN_GREEN_DURATION_SEC + waitingCars * 0.5);
+    }
 }
