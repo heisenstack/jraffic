@@ -24,7 +24,7 @@ To run the Jraffic simulation, you only need a Java Development Kit (JDK) versio
 
 ### Compilation & Execution
 
-1.  Save the source code as `JrafficSwing.java`.
+1.  Save the source code as `Jraffic.java`.
 2.  Open a terminal or command prompt and navigate to the directory where you saved the file.
 3.  Compile the code with the following command:
     ```bash
