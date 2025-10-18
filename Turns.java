@@ -1,3 +1,3 @@
-public class Turns {
-    
+public enum Turns {
+    RIGHT, LEFT, FORWARD
 }
