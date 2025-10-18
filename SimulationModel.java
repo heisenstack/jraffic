@@ -15,4 +15,10 @@ public class SimulationModel {
 
     private long totalCarsSpawned = 0;
     private long simulationStartTime = 0;
+
+    public SimulationModel() {
+        initializeSimulation();
+        simulationStartTime = System.nanoTime();
+        lastSwitchTime = System.nanoTime();
+    }
 }
