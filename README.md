@@ -28,7 +28,7 @@ To run the Jraffic simulation, you only need a Java Development Kit (JDK) versio
 2.  Open a terminal or command prompt and navigate to the directory where you saved the file.
 3.  Compile the code with the following command:
     ```bash
-    javac JrafficSwing.java
+    javac Jraffic.java
     ```
 4.  Run the compiled application with this command:
     ```bash
