@@ -9,4 +9,10 @@ public class SimulationModel {
     private final List<SpawnPoint> spawnPoints = new ArrayList<>();
     private final HashMap<Integer, Long> lastSpawnTime = new HashMap<>();
     private final Random random = new Random();
+    private int currentGreenIndex = 0;
+    private Phase phase = Phase.AllRed;
+    private long lastSwitchTime = 0;
+
+    private long totalCarsSpawned = 0;
+    private long simulationStartTime = 0;
 }
