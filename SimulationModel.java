@@ -42,4 +42,18 @@ public class SimulationModel {
         updateTrafficLights();
         updateCars();
     }
+
+    public void trySpawnCar(int spawnIndex) {
+        long now = System.nanoTime();
+        if ((now - lastSpawnTime.getOrDefault(spawnIndex, 0L)) / 1e9 < Config.MIN_SPAWN_DELAY_SEC) return;
+
+        SpawnPoint sp = spawnPoints.get(spawnIndex);
+        Car newCar = new Car(sp.x, sp.y, sp.dirX, sp.dirY, getRandomTurn());
+
+        if (!isCarTooClose(newCar, cars)) {
+            cars.add(newCar);
+            lastSpawnTime.put(spawnIndex, now);
+            totalCarsSpawned++;
+        }
+    }
 }
