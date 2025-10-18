@@ -37,4 +37,9 @@ public class SimulationModel {
         lights.add(new Light(center.x - 2 * Config.INTERSECTION_SIZE, center.y + Config.INTERSECTION_SIZE, Config.CAR_SPEED, 0));
         lights.add(new Light(center.x + Config.INTERSECTION_SIZE, center.y + Config.INTERSECTION_SIZE, 0, -Config.CAR_SPEED));
     }
+
+    public void update() {
+        updateTrafficLights();
+        updateCars();
+    }
 }
